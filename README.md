@@ -349,6 +349,70 @@ Curtos e diretos, cada um é uma automação de poucas linhas.
 
 ---
 
+## 5. Painel de controle: escolha quais avisos quer receber, sem mexer em código
+
+Com 46 automações rodando, cedo ou tarde algum aviso vai te incomodar mais do que ajudar (comigo foi o de sinal Wi-Fi fraco, disparando toda hora mesmo com o sinal bom). Em vez de ficar entrando em cada automação pra desativar, dá pra montar uma página só com um interruptor para cada aviso.
+
+### O painel
+
+Assim ficou o meu, com os 46 avisos organizados por categoria (cada bloco é um card `entities` separado):
+
+![Painel de controle com um interruptor para cada aviso](imagens/painel-avisos-completo.png)
+
+Cada automação já é, por padrão, uma entidade que liga e desliga sozinha (é assim que o Home Assistant trata toda automação). Então um card `entities` simples, listando as automações, já vira um painel de controle:
+
+```yaml
+type: entities
+title: "🚨 Motivos de pausa - urgentes"
+show_header_toggle: false
+entities:
+  - entity: automation.minha_impressora_pausa_filamento
+    secondary_info: last-triggered
+  - entity: automation.minha_impressora_bico_entupido
+    secondary_info: last-triggered
+```
+
+O `secondary_info: last-triggered` é opcional, mas é útil: mostra embaixo do nome quando foi a última vez que aquele aviso disparou, então dá pra ver de cara quais estão "barulhentos" e quais nunca dispararam.
+
+Repita esse bloco pra cada categoria de aviso (motivos de pausa, ciclo de vida, avisos extras, etc), uma abaixo da outra, numa aba nova só pra isso.
+
+### Escondendo a aba da barra de navegação
+
+Uma aba cheia de 46+ interruptores não precisa ficar visível o tempo todo competindo com as abas de verdade (câmera, controles). Dá pra deixá-la "escondida", mas ainda acessível por um botão específico:
+
+1. Crie a aba normalmente (**Editar Dashboard → Adicionar Aba**), com os cards de cima.
+2. No modo YAML dessa aba (editar a view, não o card), adicione a propriedade `visible: false` no nível da view (mesmo nível de `title` e `path`, fora de qualquer card):
+
+```yaml
+title: AVISOS
+path: avisos
+icon: mdi:bell-cog
+visible: false   # <- some da barra de abas, mas continua existindo
+cards:
+  - ...
+```
+
+Isso faz a aba sumir da barra de cima, mas ela continua funcionando normalmente pra quem souber o caminho até ela.
+
+### O botão de acesso
+
+Pra chegar até a aba escondida, adicione um card pequeno (ex: `mushroom-template-card`, do complemento Mushroom) em algum lugar visível, com uma ação de "navegar" apontando pro caminho da aba escondida:
+
+```yaml
+type: custom:mushroom-template-card
+primary: "🔔 Avisos e Notificações"
+secondary: "Toque pra escolher quais notificações receber"
+icon: mdi:bell-cog
+icon_color: amber
+tap_action:
+  action: navigate
+  navigation_path: /SEU-PAINEL/avisos   # troque SEU-PAINEL pelo nome do seu dashboard
+```
+
+O `navigation_path` segue o formato `/nome-do-seu-dashboard/caminho-da-aba` (o "caminho da aba" é o campo `path` que você deu pra ela no passo anterior). Coloquei esse botão dentro da página de detalhes de cada impressora, então de qualquer uma delas dá um toque e já cai direto na central de avisos.
+
+---
+
 ## Resumo do que você ganha com isso
 
 - Sabe **exatamente** por que a impressora pausou, sem precisar abrir o app.
